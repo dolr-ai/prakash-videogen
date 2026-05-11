@@ -88,7 +88,8 @@ CKPT="${COMFYUI_DIR}/models/checkpoints"
 mkdir -p "$CKPT"
 
 # LTX-2 19B Distilled
-if [ ! -f "${CKPT}/ltx-2-19b-distilled.safetensors" ]; then
+if [ ! -s "${CKPT}/ltx-2-19b-distilled.safetensors" ]; then
+    rm -f "${CKPT}/ltx-2-19b-distilled.safetensors"
     log "  -> LTX-2 19B Distilled (~38GB)..."
     wget -q --show-progress --header="Authorization: Bearer ${HF_TOKEN:-}" -O "${CKPT}/ltx-2-19b-distilled.safetensors" \
         "https://huggingface.co/Lightricks/LTX-2/resolve/main/ltx-2-19b-distilled.safetensors"
@@ -96,21 +97,26 @@ fi
 
 # Gemma 3 12B
 GEMMA="${CKPT}/gemma-3-12b-it-qat-q4_0-unquantized"
-if [ ! -d "$GEMMA" ]; then
+if [ ! -d "$GEMMA" ] || [ -z "$(ls -A "$GEMMA")" ]; then
     log "  -> Gemma 3 12B text encoder..."
     mkdir -p "$GEMMA"
     for i in $(seq -w 1 5); do
-        wget -q --show-progress --header="Authorization: Bearer ${HF_TOKEN:-}" -O "${GEMMA}/model-0000${i}-of-00005.safetensors" \
-            "https://huggingface.co/google/gemma-3-12b-it-qat-q4_0-unquantized/resolve/main/model-0000${i}-of-00005.safetensors" || true
+        file="${GEMMA}/model-0000${i}-of-00005.safetensors"
+        if [ ! -s "$file" ]; then
+            rm -f "$file"
+            wget -q --show-progress --header="Authorization: Bearer ${HF_TOKEN:-}" -O "$file" \
+                "https://huggingface.co/google/gemma-3-12b-it-qat-q4_0-unquantized/resolve/main/model-0000${i}-of-00005.safetensors" || true
+        fi
     done
 fi
 
 # Spatial upscaler
 UP="${COMFYUI_DIR}/models/upscale_models"
 mkdir -p "$UP"
-if [ ! -f "${UP}/ltx-2-spatial-upscaler-x2-1.0.safetensors" ]; then
+if [ ! -s "${UP}/ltx-2-spatial-upscaler-x2-1.0.safetensors" ]; then
+    rm -f "${UP}/ltx-2-spatial-upscaler-x2-1.0.safetensors"
     log "  -> Spatial Upscaler 2x..."
-    wget -q --show-progress -O "${UP}/ltx-2-spatial-upscaler-x2-1.0.safetensors" \
+    wget -q --show-progress --header="Authorization: Bearer ${HF_TOKEN:-}" -O "${UP}/ltx-2-spatial-upscaler-x2-1.0.safetensors" \
         "https://huggingface.co/Lightricks/LTX-Video-2-Spatial-Upscaler-2x/resolve/main/ltx-2-spatial-upscaler-x2-1.0.safetensors" || true
 fi
 
