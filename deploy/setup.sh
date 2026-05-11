@@ -113,7 +113,7 @@ if [ ! -d "$GEMMA" ] || [ -z "$(ls -A "$GEMMA")" ]; then
 fi
 
 log "  -> Gemma 3 config files..."
-for f in tokenizer.model tokenizer_config.json config.json model.safetensors.index.json special_tokens_map.json tokenizer.json; do
+for f in tokenizer.model tokenizer_config.json config.json model.safetensors.index.json special_tokens_map.json tokenizer.json preprocessor_config.json generation_config.json; do
     if [ ! -s "${GEMMA}/${f}" ]; then
         wget -q --show-progress --header="Authorization: Bearer ${HF_TOKEN:-}" -O "${GEMMA}/${f}" \
             "https://huggingface.co/google/gemma-3-12b-it-qat-q4_0-unquantized/resolve/main/${f}" || true
