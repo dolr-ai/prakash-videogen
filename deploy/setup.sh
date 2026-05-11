@@ -117,7 +117,7 @@ if [ ! -s "${UP}/ltx-2-spatial-upscaler-x2-1.0.safetensors" ]; then
     rm -f "${UP}/ltx-2-spatial-upscaler-x2-1.0.safetensors"
     log "  -> Spatial Upscaler 2x..."
     wget -q --show-progress --header="Authorization: Bearer ${HF_TOKEN:-}" -O "${UP}/ltx-2-spatial-upscaler-x2-1.0.safetensors" \
-        "https://huggingface.co/Lightricks/LTX-Video-2-Spatial-Upscaler-2x/resolve/main/ltx-2-spatial-upscaler-x2-1.0.safetensors" || true
+        "https://huggingface.co/Lightricks/LTX-2/resolve/main/ltx-2-spatial-upscaler-x2-1.0.safetensors" || true
 fi
 
 # =============================================================================
