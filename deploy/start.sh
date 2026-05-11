@@ -1,0 +1,118 @@
+#!/bin/bash
+# =============================================================================
+# Start videogen-worker + Cloudflare tunnel on Vast.ai
+# =============================================================================
+# ComfyUI is already started by the Vast.ai template entrypoint on port 18188.
+# This script starts:
+#   - videogen-worker on port 18288 (mapped to external 8288)
+#   - cloudflared tunnel (optional, if CF_TUNNEL_TOKEN is set)
+#
+# Required env vars:
+#   AUTH_TOKEN        - Bearer token for API auth
+#
+# Optional env vars:
+#   CF_TUNNEL_TOKEN   - Cloudflare named tunnel token
+#   SENTRY_DSN        - Sentry error reporting DSN
+#   COMFYUI_API_BASE  - ComfyUI URL (default: http://localhost:18188)
+#   PORT              - Worker port (default: 18288)
+# =============================================================================
+
+set -euo pipefail
+
+LOG_DIR="/var/log/comfyui"
+BINARY="/usr/local/bin/videogen-worker"
+
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+log() { echo -e "${GREEN}[START]${NC} $1"; }
+warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+
+mkdir -p "$LOG_DIR"
+
+# Fallback: check /workspace for the binary (manual deploy)
+if [ ! -f "$BINARY" ] && [ -f "/workspace/videogen-worker" ]; then
+    BINARY="/workspace/videogen-worker"
+fi
+
+if [ ! -f "$BINARY" ]; then
+    echo "ERROR: videogen-worker binary not found"
+    echo "Expected at /usr/local/bin/videogen-worker or /workspace/videogen-worker"
+    exit 1
+fi
+
+# =============================================================================
+# Kill existing sessions
+# =============================================================================
+for session in worker tunnel; do
+    tmux kill-session -t "$session" 2>/dev/null || true
+done
+
+# =============================================================================
+# Wait for ComfyUI to be ready (started by Vast.ai template)
+# =============================================================================
+COMFYUI_BASE="${COMFYUI_API_BASE:-http://localhost:18188}"
+log "Waiting for ComfyUI at ${COMFYUI_BASE}..."
+for i in $(seq 1 90); do
+    if curl -sf "${COMFYUI_BASE}/system_stats" > /dev/null 2>&1; then
+        log "ComfyUI ready!"
+        break
+    fi
+    [ "$i" -eq 90 ] && warn "ComfyUI not responding after 3 minutes"
+    sleep 2
+done
+
+# =============================================================================
+# Start videogen-worker
+# =============================================================================
+WORKER_PORT="${PORT:-18288}"
+log "Starting videogen-worker on port ${WORKER_PORT}..."
+
+tmux new-session -d -s worker \
+    "AUTH_TOKEN='${AUTH_TOKEN:-}' \
+     SENTRY_DSN='${SENTRY_DSN:-}' \
+     COMFYUI_API_BASE='${COMFYUI_BASE}' \
+     PORT=${WORKER_PORT} \
+     RUST_LOG='${RUST_LOG:-info,videogen_worker=debug}' \
+     ${BINARY} 2>&1 | tee ${LOG_DIR}/worker.log"
+
+sleep 3
+if curl -sf "http://localhost:${WORKER_PORT}/health" > /dev/null 2>&1; then
+    log "Worker ready!"
+else
+    warn "Worker may still be starting — check: tmux attach -t worker"
+fi
+
+# =============================================================================
+# Start Cloudflare tunnel
+# =============================================================================
+if [ -n "${CF_TUNNEL_TOKEN:-}" ]; then
+    log "Starting Cloudflare tunnel..."
+    tmux new-session -d -s tunnel \
+        "cloudflared tunnel run --token '${CF_TUNNEL_TOKEN}' 2>&1 | tee ${LOG_DIR}/tunnel.log"
+    log "Tunnel started — connected to comfyui.prakash.yral.com"
+else
+    warn "Skipping tunnel (no CF_TUNNEL_TOKEN)"
+fi
+
+# =============================================================================
+# Summary
+# =============================================================================
+echo ""
+echo -e "${CYAN}══════════════════════════════════════════════════════════${NC}"
+echo -e "${CYAN}  videogen-worker started${NC}"
+echo -e "${CYAN}══════════════════════════════════════════════════════════${NC}"
+echo ""
+echo -e "  ComfyUI:     ${COMFYUI_BASE} (managed by Vast.ai template)"
+echo -e "  Worker:      http://localhost:${WORKER_PORT}"
+echo -e "  Swagger UI:  http://localhost:${WORKER_PORT}/swagger-ui"
+echo -e "  External:    http://localhost:8288 (via Vast.ai port mapping)"
+if [ -n "${CF_TUNNEL_TOKEN:-}" ]; then
+    echo -e "  Public URL:  https://comfyui.prakash.yral.com"
+fi
+echo ""
+echo -e "  tmux attach -t worker   # Worker logs"
+echo -e "  tmux attach -t tunnel   # Tunnel logs"
+echo ""
