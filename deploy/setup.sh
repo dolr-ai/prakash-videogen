@@ -90,8 +90,8 @@ mkdir -p "$CKPT"
 # LTX-2 19B Distilled
 if [ ! -f "${CKPT}/ltx-2-19b-distilled.safetensors" ]; then
     log "  -> LTX-2 19B Distilled (~38GB)..."
-    wget -q --show-progress -O "${CKPT}/ltx-2-19b-distilled.safetensors" \
-        "https://huggingface.co/Lightricks/LTX-Video-2-19b-Distilled/resolve/main/ltx-2-19b-distilled.safetensors"
+    wget -q --show-progress --header="Authorization: Bearer ${HF_TOKEN:-}" -O "${CKPT}/ltx-2-19b-distilled.safetensors" \
+        "https://huggingface.co/Lightricks/LTX-2/resolve/main/ltx-2-19b-distilled.safetensors"
 fi
 
 # Gemma 3 12B
@@ -100,7 +100,7 @@ if [ ! -d "$GEMMA" ]; then
     log "  -> Gemma 3 12B text encoder..."
     mkdir -p "$GEMMA"
     for i in $(seq -w 1 5); do
-        wget -q --show-progress -O "${GEMMA}/model-0000${i}-of-00005.safetensors" \
+        wget -q --show-progress --header="Authorization: Bearer ${HF_TOKEN:-}" -O "${GEMMA}/model-0000${i}-of-00005.safetensors" \
             "https://huggingface.co/google/gemma-3-12b-it-qat-q4_0-unquantized/resolve/main/model-0000${i}-of-00005.safetensors" || true
     done
 fi
