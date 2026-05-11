@@ -89,7 +89,10 @@ jobs:
           chmod 600 ~/.ssh/vastai
           echo -e "Host vastai\n  HostName ${{ steps.resolve.outputs.host }}\n  Port ${{ steps.resolve.outputs.port }}\n  User root\n  IdentityFile ~/.ssh/vastai\n  StrictHostKeyChecking no" > ~/.ssh/config
 
-      - name: Deploy files
+      - name: Stop existing worker (Free binary lock)
+        run: ssh vastai "tmux kill-session -t worker 2>/dev/null || true"
+
+      - name: Deploy binary and scripts
         run: |
           scp ./bin/videogen-worker vastai:/workspace/videogen-worker
           scp ./deploy/start.sh vastai:/workspace/start.sh
