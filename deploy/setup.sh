@@ -123,7 +123,7 @@ for f in tokenizer.model tokenizer_config.json config.json model.safetensors.ind
 done
 
 # Spatial upscaler
-UP="${COMFYUI_DIR}/models/upscale_models"
+UP="${COMFYUI_DIR}/models/latent_upscale_models"
 mkdir -p "$UP"
 if [ ! -s "${UP}/ltx-2-spatial-upscaler-x2-1.0.safetensors" ]; then
     rm -f "${UP}/ltx-2-spatial-upscaler-x2-1.0.safetensors"
