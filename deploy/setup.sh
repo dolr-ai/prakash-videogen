@@ -96,7 +96,9 @@ if [ ! -s "${CKPT}/ltx-2-19b-distilled.safetensors" ]; then
 fi
 
 # Gemma 3 12B
-GEMMA="${CKPT}/gemma-3-12b-it-qat-q4_0-unquantized"
+CLIP_DIR="${COMFYUI_DIR}/models/clip"
+mkdir -p "$CLIP_DIR"
+GEMMA="${CLIP_DIR}/gemma-3-12b-it-qat-q4_0-unquantized"
 if [ ! -d "$GEMMA" ] || [ -z "$(ls -A "$GEMMA")" ]; then
     log "  -> Gemma 3 12B text encoder..."
     mkdir -p "$GEMMA"
@@ -109,6 +111,14 @@ if [ ! -d "$GEMMA" ] || [ -z "$(ls -A "$GEMMA")" ]; then
         fi
     done
 fi
+
+log "  -> Gemma 3 config files..."
+for f in tokenizer.model tokenizer_config.json config.json model.safetensors.index.json special_tokens_map.json tokenizer.json; do
+    if [ ! -s "${GEMMA}/${f}" ]; then
+        wget -q --show-progress --header="Authorization: Bearer ${HF_TOKEN:-}" -O "${GEMMA}/${f}" \
+            "https://huggingface.co/google/gemma-3-12b-it-qat-q4_0-unquantized/resolve/main/${f}" || true
+    fi
+done
 
 # Spatial upscaler
 UP="${COMFYUI_DIR}/models/upscale_models"
