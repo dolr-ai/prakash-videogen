@@ -43,7 +43,9 @@ fi
 # =============================================================================
 if [ -d "$COMFYUI_DIR" ]; then
     log "ComfyUI exists, updating..."
-    cd "$COMFYUI_DIR" && git pull --ff-only 2>/dev/null || true
+    cd "$COMFYUI_DIR"
+    git checkout master || true
+    git pull
 else
     log "Cloning ComfyUI..."
     cd "$WORKSPACE"
