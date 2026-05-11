@@ -121,6 +121,12 @@ if [ ! -s "${UP}/ltx-2-spatial-upscaler-x2-1.0.safetensors" ]; then
 fi
 
 # =============================================================================
+# Restart ComfyUI to load new custom nodes
+# =============================================================================
+log "Restarting ComfyUI to apply custom nodes..."
+supervisorctl restart comfyui || warn "Failed to restart ComfyUI, you may need to restart it manually."
+
+# =============================================================================
 # Done
 # =============================================================================
 echo ""
