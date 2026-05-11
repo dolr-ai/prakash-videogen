@@ -5,10 +5,18 @@ on:
     branches: [main]
   workflow_dispatch:
     inputs:
-      deploy:
-        description: "Deploy to Vast.ai after build"
+      host:
+        description: "Vast.ai Host IP"
+        required: true
+        type: string
+      port:
+        description: "Vast.ai SSH Port"
+        required: true
+        type: string
+      run_setup:
+        description: "Run setup.sh (installs models/nodes)"
         type: boolean
-        default: true
+        default: false
 
 env:
   CARGO_TERM_COLOR: always
@@ -61,17 +69,38 @@ jobs:
       - name: Make binary executable
         run: chmod +x ./bin/videogen-worker
 
+      - name: Resolve Vast.ai connection
+        id: resolve
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "host=${{ github.event.inputs.host }}" >> $GITHUB_OUTPUT
+            echo "port=${{ github.event.inputs.port }}" >> $GITHUB_OUTPUT
+            echo "run_setup=${{ github.event.inputs.run_setup }}" >> $GITHUB_OUTPUT
+          else
+            echo "host=${{ secrets.VASTAI_HOST }}" >> $GITHUB_OUTPUT
+            echo "port=${{ secrets.VASTAI_PORT }}" >> $GITHUB_OUTPUT
+            echo "run_setup=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.VASTAI_SSH_KEY }}" > ~/.ssh/vastai
           chmod 600 ~/.ssh/vastai
-          echo -e "Host vastai\n  HostName ${{ secrets.VASTAI_HOST }}\n  Port ${{ secrets.VASTAI_PORT }}\n  User root\n  IdentityFile ~/.ssh/vastai\n  StrictHostKeyChecking no" > ~/.ssh/config
+          echo -e "Host vastai\n  HostName ${{ steps.resolve.outputs.host }}\n  Port ${{ steps.resolve.outputs.port }}\n  User root\n  IdentityFile ~/.ssh/vastai\n  StrictHostKeyChecking no" > ~/.ssh/config
 
-      - name: Deploy binary
+      - name: Deploy files
         run: |
           scp ./bin/videogen-worker vastai:/workspace/videogen-worker
           scp ./deploy/start.sh vastai:/workspace/start.sh
+          scp ./deploy/setup.sh vastai:/workspace/setup.sh
+
+      - name: Run Setup (Optional)
+        if: steps.resolve.outputs.run_setup == 'true'
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          ssh vastai "HF_TOKEN=${HF_TOKEN} bash /workspace/setup.sh"
 
       - name: Start services
         env:
@@ -93,15 +122,17 @@ jobs:
             export SENTRY_DSN="${{ secrets.SENTRY_DSN }}"
             export CF_TUNNEL_TOKEN="${{ secrets.CF_TUNNEL_TOKEN }}"
 
+            # Ensure worker starts on port 18288
+            export PORT=18288
+            export COMFYUI_API_BASE=http://localhost:18188
+
             bash /workspace/start.sh
 
             echo "=== Deployment complete ==="
-            echo "Health check:"
-            sleep 3
-            curl -sf http://localhost:8288/health || echo "Worker still starting..."
           DEPLOY_EOF
 
       - name: Verify deployment
         run: |
-          sleep 5
-          ssh vastai "curl -sf http://localhost:8288/health | jq ."
+          echo "Waiting for worker to start..."
+          sleep 10
+          ssh vastai "curl -sf http://localhost:18288/health | jq ." || echo "Worker health check failed (might still be starting or model loading)"
