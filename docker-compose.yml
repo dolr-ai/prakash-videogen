@@ -1,0 +1,61 @@
+# =============================================================================
+# Docker Compose for videogen-worker
+# =============================================================================
+# For self-hosted / bare-metal deployments (NOT used on Vast.ai).
+#
+# Usage:
+#   docker compose up -d
+#
+# Note: On Vast.ai, services are started via deploy/start.sh instead,
+# since the instance itself runs inside a Docker container (no DinD).
+# =============================================================================
+
+services:
+  videogen-worker:
+    build: .
+    image: ghcr.io/dolr-ai/videogen-worker:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    ports:
+      - "${PORT:-18288}:18288"
+    environment:
+      PORT: "18288"
+      BACKEND_TYPE: "comfyui"
+      COMFYUI_API_BASE: "${COMFYUI_API_BASE:-http://localhost:18188}"
+      AUTH_TOKEN: ${AUTH_TOKEN}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      RUST_LOG: "${RUST_LOG:-info,videogen_worker=debug}"
+      VIDEO_TTL_MINUTES: "${VIDEO_TTL_MINUTES:-10}"
+      CLEANUP_CHECK_INTERVAL: "${CLEANUP_CHECK_INTERVAL:-300}"
+    volumes:
+      - comfyui_output:/workspace/ComfyUI/output
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:18288/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel run --token ${CF_TUNNEL_TOKEN}
+    depends_on:
+      videogen-worker:
+        condition: service_healthy
+
+  beszel-agent:
+    image: henrygd/beszel-agent
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - beszel_agent_data:/var/lib/beszel-agent
+    environment:
+      LISTEN: "${BESZEL_PORT:-45876}"
+      KEY: "${BESZEL_KEY}"
+      TOKEN: "${BESZEL_TOKEN}"
+      HUB_URL: "${BESZEL_HUB_URL:-https://beszel.yral.com}"
+
+volumes:
+  comfyui_output:
+  beszel_agent_data:
