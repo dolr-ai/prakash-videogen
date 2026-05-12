@@ -6,7 +6,7 @@ use anyhow::{Context, Result};
 use axum::body::Bytes;
 use futures_util::StreamExt;
 use tokio::sync::RwLock;
-use tracing::{error, info, warn};
+use tracing::{info, warn};
 
 use super::types::*;
 use super::JobState;
@@ -127,11 +127,11 @@ impl ComfyUIClient {
                             let msg_prompt_id =
                                 ws_msg.data.get("prompt_id").and_then(|v| v.as_str());
 
-                            if node.is_none() || (node.is_some() && node.unwrap().is_null()) {
-                                if msg_prompt_id == Some(prompt_id) {
-                                    info!(job_id, "Execution complete");
-                                    break;
-                                }
+                            if (node.is_none() || (node.is_some() && node.unwrap().is_null()))
+                                && msg_prompt_id == Some(prompt_id)
+                            {
+                                info!(job_id, "Execution complete");
+                                break;
                             }
                         }
                         "execution_error" => {

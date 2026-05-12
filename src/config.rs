@@ -11,6 +11,10 @@ pub struct AppConfig {
     pub comfyui_host: String,
     pub comfyui_port: u16,
     pub comfyui_output_dir: String,
+    
+    // Video cleanup config
+    pub video_ttl_minutes: u64,
+    pub cleanup_check_interval: u64,
 }
 
 impl AppConfig {
@@ -44,6 +48,14 @@ impl AppConfig {
             comfyui_port,
             comfyui_output_dir: std::env::var("COMFYUI_OUTPUT_DIR")
                 .unwrap_or_else(|_| "/workspace/ComfyUI/output".into()),
+            video_ttl_minutes: std::env::var("VIDEO_TTL_MINUTES")
+                .unwrap_or_else(|_| "10".into())
+                .parse()
+                .unwrap_or(10),
+            cleanup_check_interval: std::env::var("CLEANUP_CHECK_INTERVAL")
+                .unwrap_or_else(|_| "300".into())
+                .parse()
+                .unwrap_or(300),
         })
     }
 }

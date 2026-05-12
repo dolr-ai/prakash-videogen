@@ -14,7 +14,7 @@ use super::{
 };
 use crate::webhook;
 use client::ComfyUIClient;
-pub use types::*;
+
 
 /// ComfyUI backend adapter
 pub struct ComfyUIBackend {
@@ -24,6 +24,7 @@ pub struct ComfyUIBackend {
 
 /// Internal job tracking state
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct JobState {
     pub id: String,
     pub prompt_id: String,

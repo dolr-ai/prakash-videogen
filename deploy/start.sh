@@ -46,7 +46,7 @@ fi
 # =============================================================================
 # Kill existing sessions
 # =============================================================================
-for session in worker tunnel; do
+for session in worker tunnel beszel; do
     tmux kill-session -t "$session" 2>/dev/null || true
 done
 
@@ -98,6 +98,21 @@ else
 fi
 
 # =============================================================================
+# Start Beszel Agent
+# =============================================================================
+if [ -x "/usr/local/bin/beszel-agent" ]; then
+    log "Starting Beszel Agent..."
+    tmux new-session -d -s beszel \
+        "LISTEN=${BESZEL_PORT:-45876} \
+         KEY='${BESZEL_KEY:-}' \
+         TOKEN='${BESZEL_TOKEN:-}' \
+         HUB_URL='${BESZEL_HUB_URL:-https://beszel.yral.com}' \
+         /usr/local/bin/beszel-agent 2>&1 | tee ${LOG_DIR}/beszel.log"
+else
+    warn "Beszel Agent not found. Run setup.sh to install it."
+fi
+
+# =============================================================================
 # Summary
 # =============================================================================
 echo ""
@@ -115,4 +130,5 @@ fi
 echo ""
 echo -e "  tmux attach -t worker   # Worker logs"
 echo -e "  tmux attach -t tunnel   # Tunnel logs"
+echo -e "  tmux attach -t beszel   # Beszel logs"
 echo ""

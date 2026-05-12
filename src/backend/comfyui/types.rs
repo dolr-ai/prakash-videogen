@@ -31,6 +31,7 @@ pub struct NodeOutput {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct FileOutput {
     pub filename: String,
     #[serde(default)]

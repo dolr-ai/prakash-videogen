@@ -110,6 +110,8 @@ jobs:
           AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           CF_TUNNEL_TOKEN: ${{ secrets.CF_TUNNEL_TOKEN }}
+          BESZEL_KEY: ${{ secrets.BESZEL_KEY }}
+          BESZEL_TOKEN: ${{ secrets.BESZEL_TOKEN }}
         run: |
           ssh vastai << 'DEPLOY_EOF'
             set -e
@@ -117,6 +119,7 @@ jobs:
             # Stop existing services
             tmux kill-session -t worker 2>/dev/null || true
             tmux kill-session -t tunnel 2>/dev/null || true
+            tmux kill-session -t beszel 2>/dev/null || true
 
             chmod +x /workspace/videogen-worker /workspace/start.sh
 
@@ -124,6 +127,8 @@ jobs:
             export AUTH_TOKEN="${{ secrets.AUTH_TOKEN }}"
             export SENTRY_DSN="${{ secrets.SENTRY_DSN }}"
             export CF_TUNNEL_TOKEN="${{ secrets.CF_TUNNEL_TOKEN }}"
+            export BESZEL_KEY="${{ secrets.BESZEL_KEY }}"
+            export BESZEL_TOKEN="${{ secrets.BESZEL_TOKEN }}"
 
             # Ensure worker starts on port 18288
             export PORT=18288

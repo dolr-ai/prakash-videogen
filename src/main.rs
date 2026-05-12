@@ -8,6 +8,7 @@ mod backend;
 mod config;
 mod routes;
 mod webhook;
+mod cleanup;
 
 use config::AppConfig;
 
@@ -24,8 +25,8 @@ async fn main() -> Result<()> {
     let config = AppConfig::from_env()?;
 
     // Initialize Sentry
-    let _guard = if let Some(ref dsn) = config.sentry_dsn {
-        Some(sentry::init((
+    let _guard = config.sentry_dsn.as_ref().map(|dsn| {
+        sentry::init((
             dsn.as_str(),
             sentry::ClientOptions {
                 release: sentry::release_name!(),
@@ -37,10 +38,8 @@ async fn main() -> Result<()> {
                 ),
                 ..Default::default()
             },
-        )))
-    } else {
-        None
-    };
+        ))
+    });
 
     // Initialize tracing
     let subscriber = tracing_subscriber::fmt()
@@ -80,6 +79,9 @@ async fn main() -> Result<()> {
 
     // Build router
     let app = routes::build_router(state);
+
+    // Spawn background cleanup task
+    tokio::spawn(cleanup::start_cleanup_task(config.clone()));
 
     let addr = format!("0.0.0.0:{}", config.port);
     info!("Starting videogen-worker on {addr}");

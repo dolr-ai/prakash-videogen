@@ -1,7 +1,7 @@
 use axum::{
     extract::Request,
     http::StatusCode,
-    middleware::{self, Next},
+    middleware::Next,
     response::Response,
 };
 

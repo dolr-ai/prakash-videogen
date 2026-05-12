@@ -39,6 +39,17 @@ if ! command -v cloudflared &> /dev/null; then
 fi
 
 # =============================================================================
+# Beszel Agent
+# =============================================================================
+if [ ! -f "/usr/local/bin/beszel-agent" ]; then
+    log "Installing Beszel Agent..."
+    wget -q --show-progress -O beszel-agent.tar.gz https://github.com/henrygd/beszel/releases/latest/download/beszel-agent_Linux_x86_64.tar.gz
+    tar -xzf beszel-agent.tar.gz
+    mv beszel-agent /usr/local/bin/
+    rm beszel-agent.tar.gz
+fi
+
+# =============================================================================
 # ComfyUI
 # =============================================================================
 if [ -d "$COMFYUI_DIR" ]; then
