@@ -32,6 +32,12 @@ RUN chmod +x /usr/local/bin/videogen-worker
 RUN curl -sL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
     -o /usr/local/bin/cloudflared && chmod +x /usr/local/bin/cloudflared
 
+# Install Beszel Agent
+RUN curl -sL https://github.com/henrygd/beszel/releases/latest/download/beszel-agent_linux_amd64.tar.gz -o beszel-agent.tar.gz \
+    && tar -xzf beszel-agent.tar.gz \
+    && mv beszel-agent /usr/local/bin/ \
+    && rm beszel-agent.tar.gz
+
 # Default env vars (matching Vast.ai template port scheme)
 ENV PORT=18288 \
     BACKEND_TYPE=comfyui \

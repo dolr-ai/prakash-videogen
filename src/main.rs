@@ -5,10 +5,10 @@ use tracing::info;
 
 mod auth;
 mod backend;
+mod cleanup;
 mod config;
 mod routes;
 mod webhook;
-mod cleanup;
 
 use config::AppConfig;
 

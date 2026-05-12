@@ -11,7 +11,7 @@ pub struct AppConfig {
     pub comfyui_host: String,
     pub comfyui_port: u16,
     pub comfyui_output_dir: String,
-    
+
     // Video cleanup config
     pub video_ttl_minutes: u64,
     pub cleanup_check_interval: u64,

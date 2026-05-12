@@ -15,7 +15,6 @@ use super::{
 use crate::webhook;
 use client::ComfyUIClient;
 
-
 /// ComfyUI backend adapter
 pub struct ComfyUIBackend {
     client: ComfyUIClient,

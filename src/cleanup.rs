@@ -24,7 +24,8 @@ pub async fn start_cleanup_task(config: AppConfig) {
                 if deleted_count > 0 {
                     info!(
                         "Cleanup complete: deleted {} files, freed {}",
-                        deleted_count, format_size(freed_bytes)
+                        deleted_count,
+                        format_size(freed_bytes)
                     );
                 }
             }
@@ -59,7 +60,10 @@ async fn run_cleanup(output_dir: &str, ttl: Duration) -> anyhow::Result<(usize, 
 
     // Check if directory exists
     if !fs::try_exists(output_dir).await.unwrap_or(false) {
-        debug!("Output directory {} does not exist, skipping cleanup", output_dir);
+        debug!(
+            "Output directory {} does not exist, skipping cleanup",
+            output_dir
+        );
         return Ok((0, 0));
     }
 
@@ -67,13 +71,14 @@ async fn run_cleanup(output_dir: &str, ttl: Duration) -> anyhow::Result<(usize, 
 
     while let Some(entry) = entries.next_entry().await? {
         let path = entry.path();
-        
+
         if !path.is_file() {
             continue;
         }
 
         // Check extension
-        let is_video = path.extension()
+        let is_video = path
+            .extension()
             .and_then(|ext| ext.to_str())
             .map(|ext| VIDEO_EXTENSIONS.contains(&ext.to_lowercase().as_str()))
             .unwrap_or(false);
