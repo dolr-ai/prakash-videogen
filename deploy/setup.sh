@@ -43,7 +43,7 @@ fi
 # =============================================================================
 if [ ! -f "/usr/local/bin/beszel-agent" ]; then
     log "Installing Beszel Agent..."
-    wget -q --show-progress -O beszel-agent.tar.gz https://github.com/henrygd/beszel/releases/latest/download/beszel-agent_Linux_x86_64.tar.gz
+    wget -q --show-progress -O beszel-agent.tar.gz https://github.com/henrygd/beszel/releases/latest/download/beszel-agent_linux_amd64.tar.gz
     tar -xzf beszel-agent.tar.gz
     mv beszel-agent /usr/local/bin/
     rm beszel-agent.tar.gz
