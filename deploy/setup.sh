@@ -65,7 +65,7 @@ fi
 
 cd "$COMFYUI_DIR"
 log "Installing ComfyUI dependencies..."
-pip install -r requirements.txt -q
+pip install --no-cache-dir -r requirements.txt -q
 
 # =============================================================================
 # Custom nodes
@@ -83,14 +83,14 @@ for repo in \
         log "  -> $dir"
         git clone "$repo"
         cd "$dir"
-        [ -f requirements.txt ] && pip install -r requirements.txt -q 2>/dev/null || true
+        [ -f requirements.txt ] && pip install --no-cache-dir -r requirements.txt -q 2>/dev/null || true
         cd ..
     else
         log "  -> $dir (exists)"
     fi
 done
 
-pip install sageattention -q 2>/dev/null || warn "SageAttention failed"
+pip install --no-cache-dir sageattention -q 2>/dev/null || warn "SageAttention failed"
 
 # =============================================================================
 # Model weights

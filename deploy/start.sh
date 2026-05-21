@@ -50,6 +50,9 @@ for session in worker tunnel beszel; do
     tmux kill-session -t "$session" 2>/dev/null || true
 done
 
+# Stop the pre-installed Python API wrapper (occupies port 18288 on some templates)
+supervisorctl stop api-wrapper 2>/dev/null || true
+
 # =============================================================================
 # Wait for ComfyUI to be ready (started by Vast.ai template)
 # =============================================================================
